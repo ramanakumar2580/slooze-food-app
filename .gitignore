@@ -24,7 +24,6 @@ env/
 .env/
 bin/
 include/
-lib/
 share/
 
 # --- Environment Variables & Secrets (CRITICAL) ---
@@ -82,3 +81,4 @@ Desktop.ini
 coverage/
 .nyc_output/
 .cypress/
+/src/generated/prisma

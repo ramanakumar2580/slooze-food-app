@@ -1,11 +1,12 @@
+// Standardizing Region to match User Country
 export type Role = "ADMIN" | "MANAGER" | "MEMBER";
-export type Region = "India" | "America";
+export type Region = "INDIA" | "USA";
 
 export interface User {
   id: string;
   name: string;
   role: Role;
-  region: Region;
+  country: Region | "ALL"; // Changed to match Region
 }
 
 export interface MenuItem {
