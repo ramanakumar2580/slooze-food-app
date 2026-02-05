@@ -13,26 +13,21 @@ import {
 } from "lucide-react";
 
 export default function AdminRestaurants() {
-  // 1. Removed Mock Data - Now using real database state
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-
-  // Modal States
   const [isAddRestaurantModalOpen, setAddRestaurantModalOpen] = useState(false);
   const [activeRestaurantForMenu, setActiveRestaurantForMenu] = useState<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     any | null
   >(null);
 
-  // Form States
   const [newResName, setNewResName] = useState("");
   const [newResRegion, setNewResRegion] = useState<"USA" | "INDIA">("USA");
   const [newItemName, setNewItemName] = useState("");
   const [newItemCategory, setNewItemCategory] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
 
-  // 2. Fetch Real Vendors from Database
   const fetchRestaurants = async () => {
     try {
       const res = await fetch("/api/vendors");
@@ -50,12 +45,10 @@ export default function AdminRestaurants() {
     fetchRestaurants();
   }, []);
 
-  // Filter logic
   const filteredRestaurants = restaurants.filter((r) =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // 3. HANDLER: Add New Vendor to Database
   const handleAddRestaurant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newResName) return;
@@ -70,14 +63,13 @@ export default function AdminRestaurants() {
       if (res.ok) {
         setAddRestaurantModalOpen(false);
         setNewResName("");
-        fetchRestaurants(); // Refresh the list
+        fetchRestaurants();
       }
     } catch (error) {
       console.error("Failed to add restaurant:", error);
     }
   };
 
-  // 4. HANDLER: Add Menu Item to Database
   const handleAddMenuItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
@@ -89,7 +81,6 @@ export default function AdminRestaurants() {
       return;
 
     try {
-      // Calls the same API, but we specify the item creation
       const res = await fetch("/api/vendors/menu", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -106,20 +97,18 @@ export default function AdminRestaurants() {
         setNewItemCategory("");
         setNewItemPrice("");
         setActiveRestaurantForMenu(null);
-        fetchRestaurants(); // Refresh to show new menu count
+        fetchRestaurants();
       }
     } catch (error) {
       console.error("Failed to add menu item:", error);
     }
   };
-
-  // 5. HANDLER: Delete Vendor from Database
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure? This will permanently remove this vendor.")) {
       try {
         const res = await fetch(`/api/vendors?id=${id}`, { method: "DELETE" });
         if (res.ok) {
-          fetchRestaurants(); // Refresh the list
+          fetchRestaurants();
         }
       } catch (error) {
         console.error("Failed to delete restaurant:", error);
@@ -129,7 +118,6 @@ export default function AdminRestaurants() {
 
   return (
     <div className="space-y-8">
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
@@ -146,8 +134,6 @@ export default function AdminRestaurants() {
           <Plus className="w-4 h-4" /> Add Vendor
         </button>
       </div>
-
-      {/* SEARCH */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
         <input
@@ -158,8 +144,6 @@ export default function AdminRestaurants() {
           className="w-full h-12 pl-11 pr-4 rounded-2xl border border-zinc-200 focus:outline-none focus:border-zinc-400 bg-white shadow-sm"
         />
       </div>
-
-      {/* RESTAURANT GRID */}
       {restaurants.length === 0 ? (
         <div className="text-center py-12 text-zinc-400 font-medium">
           No vendors found. Click &quot;Add Vendor&quot; to create your first
@@ -237,8 +221,6 @@ export default function AdminRestaurants() {
           ))}
         </div>
       )}
-
-      {/* MODAL: ADD RESTAURANT */}
       {isAddRestaurantModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">
@@ -294,7 +276,6 @@ export default function AdminRestaurants() {
         </div>
       )}
 
-      {/* MODAL: ADD MENU ITEM */}
       {activeRestaurantForMenu && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">

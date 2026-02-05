@@ -14,22 +14,18 @@ import {
 } from "lucide-react";
 
 export default function AdminRestaurants() {
-  // 1. Admin Region Toggle
   const [adminRegion, setAdminRegion] = useState<"ALL" | "USA" | "INDIA">(
     "ALL",
   );
 
-  // 2. Data State
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 3. Modal State
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newRegion, setNewRegion] = useState("USA");
 
-  // 4. Fetch Restaurants
   const fetchRestaurants = async () => {
     try {
       const res = await fetch("/api/vendors");
@@ -46,7 +42,6 @@ export default function AdminRestaurants() {
     fetchRestaurants();
   }, []);
 
-  // 5. HANDLER: Add Restaurant
   const handleAddRestaurant = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -65,7 +60,6 @@ export default function AdminRestaurants() {
     }
   };
 
-  // 6. HANDLER: Delete Restaurant
   const handleDelete = async (id: string) => {
     if (
       confirm("Are you sure? This will delete the restaurant and its menu.")
@@ -79,7 +73,6 @@ export default function AdminRestaurants() {
     }
   };
 
-  // Filter Logic
   const filteredRestaurants = restaurants.filter((r) => {
     const matchesRegion = adminRegion === "ALL" || r.region === adminRegion;
     const matchesSearch = r.name
@@ -90,7 +83,6 @@ export default function AdminRestaurants() {
 
   return (
     <div className="space-y-8">
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
@@ -101,7 +93,6 @@ export default function AdminRestaurants() {
           </p>
         </div>
 
-        {/* REGION TOGGLES */}
         <div className="flex items-center gap-4 bg-zinc-900 p-2 rounded-2xl text-white shadow-lg">
           <div className="flex bg-zinc-800 rounded-xl p-1">
             <button
@@ -125,8 +116,6 @@ export default function AdminRestaurants() {
           </div>
         </div>
       </div>
-
-      {/* TOOLBAR */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-3xl border border-zinc-100 shadow-sm">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -145,8 +134,6 @@ export default function AdminRestaurants() {
           <Plus className="w-4 h-4" /> Add Vendor
         </button>
       </div>
-
-      {/* RESTAURANT GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredRestaurants.map((restaurant) => (
           <div
@@ -194,8 +181,6 @@ export default function AdminRestaurants() {
           </div>
         ))}
       </div>
-
-      {/* ADD MODAL */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">

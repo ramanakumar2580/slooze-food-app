@@ -75,7 +75,6 @@ export default function AdminOrders() {
 
   return (
     <div className="flex flex-col space-y-4 p-4 bg-zinc-50 max-h-[calc(100vh-80px)] overflow-hidden">
-      {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4 shrink-0">
         <div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
@@ -129,7 +128,6 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {/* TABLE CONTAINER */}
       <div className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm flex flex-col shrink-0">
         <div className="p-4 border-b border-zinc-100 bg-white flex flex-col md:flex-row gap-4 justify-between items-center shrink-0">
           <div className="relative w-full md:w-96">
@@ -161,7 +159,6 @@ export default function AdminOrders() {
           </div>
         </div>
 
-        {/* SCROLLABLE AREA: Fits 7 Rows + 1 Header (64px each) */}
         <div className="overflow-y-auto h-[512px] relative scrollbar-thin scrollbar-thumb-zinc-200">
           <table className="w-full text-left text-sm border-separate border-spacing-0">
             <thead className="sticky top-0 z-20">
@@ -196,7 +193,6 @@ export default function AdminOrders() {
                       key={order.id}
                       className="group hover:bg-zinc-50/50 transition-colors h-[64px]"
                     >
-                      {/* FIX: Changed text-zinc-300 to text-zinc-500 for better visibility */}
                       <td className="px-6 py-4 font-mono text-xs font-bold text-zinc-500">
                         #{order.id.slice(0, 8)}
                       </td>

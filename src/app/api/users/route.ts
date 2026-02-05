@@ -1,7 +1,7 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET: Fetch all employees (For the Admin "Manage Employees" table)
 export async function GET() {
   try {
     const users = await prisma.user.findMany({
@@ -17,7 +17,6 @@ export async function GET() {
   }
 }
 
-// POST: Add a new employee
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -27,7 +26,7 @@ export async function POST(request: Request) {
       data: {
         name,
         email,
-        password, // In production, always hash this!
+        password,
         role,
         country,
         managerId,
@@ -43,7 +42,7 @@ export async function POST(request: Request) {
     );
   }
 }
-// DELETE: Remove an employee
+
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");

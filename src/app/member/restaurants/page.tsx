@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,7 +21,6 @@ export default function MemberRestaurants() {
   const { user } = useUserStore();
   const { addItem, removeItem, items, clearCart } = useCartStore();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewRegion, setViewRegion] = useState("USA");
@@ -40,7 +40,6 @@ export default function MemberRestaurants() {
         if (res.ok) {
           const allRestaurants = await res.json();
           const activeRestaurants = allRestaurants.filter(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (r: any) => r.isActive,
           );
           setRestaurants(activeRestaurants);
@@ -52,11 +51,8 @@ export default function MemberRestaurants() {
     fetchRestaurants();
   }, [user]);
 
-  // SMART ADD HANDLER
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAddItem = (item: any, restaurant: any) => {
     if (items.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const currentCartItem = items[0] as any;
       const cartRegion = currentCartItem.region;
 
@@ -82,16 +78,12 @@ export default function MemberRestaurants() {
       region: restaurant.region,
     });
   };
-
-  // NEW: Helper to get quantity of an item in the cart
   const getItemQuantity = (itemId: string) => {
     const cartItems = items.filter((i) => i.id === itemId);
     return cartItems.length;
   };
 
-  // NEW: Helper to remove ONE instance of an item
   const handleRemoveItem = (itemId: string) => {
-    // Find the LAST instance of this item in the cart to remove (LIFO)
     const itemToRemove = items
       .slice()
       .reverse()
@@ -107,7 +99,6 @@ export default function MemberRestaurants() {
     const matchesRegion = res.region === viewRegion;
     const matchesSearch =
       res.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       res.menu.some((item: any) =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()),
       );
@@ -116,7 +107,6 @@ export default function MemberRestaurants() {
 
   return (
     <div className="space-y-8">
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
@@ -200,7 +190,6 @@ export default function MemberRestaurants() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {restaurant.menu.map((item: any) => {
                 const quantity = getItemQuantity(item.id);
 
@@ -224,8 +213,6 @@ export default function MemberRestaurants() {
                         {formatPrice(item.price, restaurant.region)}
                       </p>
                     </div>
-
-                    {/* ADD / REMOVE CONTROLS */}
                     <div className="flex items-center gap-2">
                       {quantity > 0 && (
                         <>

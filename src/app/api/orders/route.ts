@@ -1,9 +1,6 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-// ==========================================
-// 1. GET: Fetch Orders (Fixed to exclude CANCELLED orders for Admins/Managers)
-// ==========================================
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
@@ -17,17 +14,13 @@ export async function GET(request: Request) {
     let query: any = {};
 
     if (view === "MY_ORDERS") {
-      // Members usually want to see their full history, including cancelled ones.
-      // You can add { status: { not: "CANCELLED" } } here too if you want them hidden.
       query = { userId };
     } else if (view === "TEAM_ORDERS" && role === "MANAGER") {
-      // MANAGER: Only show valid orders in the list to prevent revenue errors
       query = {
         restaurant: { region: country },
         status: { not: "CANCELLED" },
       };
     } else if (view === "GLOBAL" && role === "ADMIN") {
-      // ADMIN: Filter by country if selected, AND exclude cancelled orders
       query = {
         ...(country ? { restaurant: { region: country } } : {}),
         status: { not: "CANCELLED" },

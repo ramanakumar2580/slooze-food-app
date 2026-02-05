@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -6,7 +7,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { restaurantId, name, category, price } = body;
 
-    // Creates the new food item directly in the database
     const newItem = await prisma.menuItem.create({
       data: {
         name,

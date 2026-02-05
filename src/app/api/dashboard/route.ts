@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -16,11 +17,9 @@ export async function GET(request: Request) {
     let userCount = 0;
     let restaurantCount = 0;
 
-    // 1. ADMIN LOGIC
     if (role === "ADMIN") {
       const regionFilter = country ? { restaurant: { region: country } } : {};
 
-      // A. Count Orders (Excluding Cancelled)
       orderCount = await prisma.order.count({
         where: {
           ...regionFilter,
@@ -28,7 +27,6 @@ export async function GET(request: Request) {
         },
       });
 
-      // B. Count Pending Approvals
       pendingApprovals = await prisma.order.count({
         where: {
           ...regionFilter,
@@ -36,8 +34,6 @@ export async function GET(request: Request) {
           status: { not: "CANCELLED" },
         },
       });
-
-      // C. Revenue (Excluding Cancelled)
       const usaStats = await prisma.order.aggregate({
         _sum: { totalAmount: true },
         where: {
@@ -60,8 +56,6 @@ export async function GET(request: Request) {
 
       revenueUSD = usaStats._sum.totalAmount || 0;
       revenueINR = indiaStats._sum.totalAmount || 0;
-
-      // D. System Health
       const userFilter = country ? { country: country } : {};
       const restFilter = country ? { region: country } : {};
 
@@ -71,15 +65,12 @@ export async function GET(request: Request) {
       restaurantCount = await prisma.restaurant.count({
         where: { isActive: true, ...restFilter },
       });
-    }
-
-    // 2. MANAGER LOGIC (The Fix is Here)
-    else if (role === "MANAGER") {
+    } else if (role === "MANAGER") {
       const teamOrders = await prisma.order.findMany({
         where: {
           restaurant: { region: country },
-          status: { not: "CANCELLED" }, // 1. Exclude Cancelled
-          user: { role: { not: "ADMIN" } }, // 2. EXCLUDE ADMIN ORDERS
+          status: { not: "CANCELLED" },
+          user: { role: { not: "ADMIN" } },
         },
       });
 
@@ -94,7 +85,6 @@ export async function GET(request: Request) {
         0,
       );
 
-      // Assign to correct currency bucket
       if (country === "USA") {
         revenueUSD = totalRaw;
       } else {
@@ -108,10 +98,7 @@ export async function GET(request: Request) {
       restaurantCount = await prisma.restaurant.count({
         where: { isActive: true, region: country },
       });
-    }
-
-    // 3. MEMBER LOGIC
-    else {
+    } else {
       const myOrders = await prisma.order.findMany({ where: { userId } });
 
       orderCount = myOrders.length;

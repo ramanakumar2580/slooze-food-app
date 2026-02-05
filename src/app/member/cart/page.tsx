@@ -39,12 +39,10 @@ export default function CartPage() {
 
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // State to store fetched restaurant info (Name & Region) for each item
   const [cartMetadata, setCartMetadata] = useState<
     Record<string, { name: string; region: string }>
   >({});
 
-  // 1. Fetch Restaurant Names & Regions on Load
   useEffect(() => {
     const loadMetadata = async () => {
       const uniqueRestaurantIds = Array.from(
@@ -173,7 +171,6 @@ export default function CartPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-zinc-900">{item.name}</h3>
-                      {/* SHOW RESTAURANT NAME HERE */}
                       <p className="text-xs text-zinc-500 font-medium flex items-center gap-1">
                         <Store className="w-3 h-3" />
                         {restaurantInfo ? restaurantInfo.name : "Loading..."}
@@ -181,7 +178,6 @@ export default function CartPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
-                    {/* Price formatted by Restaurant Region */}
                     <span className="font-bold text-zinc-900">
                       {formatPrice(
                         item.price,
@@ -213,7 +209,6 @@ export default function CartPage() {
             <div className="flex justify-between text-sm">
               <span className="text-zinc-500 font-medium">Subtotal</span>
               <span className="font-bold text-zinc-900">
-                {/* Total formatted by Cart Region */}
                 {formatPrice(total(), cartRegion || user.country)}
               </span>
             </div>

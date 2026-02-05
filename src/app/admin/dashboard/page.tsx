@@ -14,19 +14,15 @@ import {
   Earth,
 } from "lucide-react";
 
-// Live Exchange Rate
 const USD_TO_INR = 83;
 
 export default function AdminDashboard() {
   const { user } = useUserStore();
 
-  // 1. Admin Toggles
   const [adminRegion, setAdminRegion] = useState<"ALL" | "USA" | "INDIA">(
     "ALL",
   );
   const [adminCurrency, setAdminCurrency] = useState<"USD" | "INR">("USD");
-
-  // 2. Stats State (Matches the new API structure)
   const [stats, setStats] = useState({
     revenueUSD: 0,
     revenueINR: 0,
@@ -37,19 +33,16 @@ export default function AdminDashboard() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
 
-  // 3. Fetch Data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const queryCountry = adminRegion === "ALL" ? "" : adminRegion;
 
-        // Fetch Stats
         const statsRes = await fetch(
           `/api/dashboard?role=ADMIN&country=${queryCountry}`,
         );
         if (statsRes.ok) setStats(await statsRes.json());
 
-        // Fetch Recent Orders
         const ordersRes = await fetch(
           `/api/orders?view=GLOBAL&role=ADMIN&country=${queryCountry}`,
         );
@@ -67,9 +60,7 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, [adminRegion]);
 
-  // 4. TOTAL REVENUE CALCULATION LOGIC
   const displayRevenue = (() => {
-    // A. GLOBAL VIEW (Sum of both)
     if (adminRegion === "ALL") {
       if (adminCurrency === "USD") {
         return stats.revenueUSD + stats.revenueINR / USD_TO_INR;
@@ -78,28 +69,25 @@ export default function AdminDashboard() {
       }
     }
 
-    // B. USA VIEW (Only count USD Revenue)
     if (adminRegion === "USA") {
       if (adminCurrency === "USD") {
         return stats.revenueUSD;
       } else {
-        return stats.revenueUSD * USD_TO_INR; // Convert to INR if viewing in INR
+        return stats.revenueUSD * USD_TO_INR;
       }
     }
 
-    // C. INDIA VIEW (Only count INR Revenue)
     if (adminRegion === "INDIA") {
       if (adminCurrency === "INR") {
         return stats.revenueINR;
       } else {
-        return stats.revenueINR / USD_TO_INR; // Convert to USD if viewing in USD
+        return stats.revenueINR / USD_TO_INR;
       }
     }
 
     return 0;
   })();
 
-  // 5. RECENT ORDER LIST CONVERSION
   const getConvertedPrice = (originalAmount: number, itemRegion: string) => {
     if (itemRegion === "INDIA" && adminCurrency === "USD")
       return originalAmount / USD_TO_INR;
@@ -110,7 +98,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
@@ -122,7 +109,6 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* CONTROLS */}
         <div className="flex items-center gap-4 bg-zinc-900 p-2 rounded-2xl text-white shadow-lg">
           <div className="flex bg-zinc-800 rounded-xl p-1">
             <button
@@ -182,7 +168,6 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* STAT CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm transition-all">
           <div className="flex items-center justify-between mb-4">

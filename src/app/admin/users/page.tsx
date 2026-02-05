@@ -15,20 +15,16 @@ import {
 } from "lucide-react";
 
 export default function AdminUsers() {
-  // 1. Live Database State
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [users, setUsers] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
-
-  // 2. Modal States for Adding Employee
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState("MEMBER");
   const [newCountry, setNewCountry] = useState("USA");
 
-  // 3. Fetch Real Employees from Database
   const fetchUsers = async () => {
     try {
       const res = await fetch("/api/users");
@@ -45,8 +41,6 @@ export default function AdminUsers() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
   }, []);
-
-  // Filter Logic (Search + Role Dropdown)
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -55,7 +49,6 @@ export default function AdminUsers() {
     return matchesSearch && matchesRole;
   });
 
-  // 4. HANDLER: Add New Employee (WITH DEMO PASSWORD FIX)
   const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -65,7 +58,7 @@ export default function AdminUsers() {
         body: JSON.stringify({
           name: newName,
           email: newEmail,
-          password: "password123", // <--- FORCES DEMO PASSWORD FOR LOGIN PAGE
+          password: "password123",
           role: newRole,
           country: newCountry,
         }),
@@ -75,14 +68,13 @@ export default function AdminUsers() {
         setAddModalOpen(false);
         setNewName("");
         setNewEmail("");
-        fetchUsers(); // Refresh table instantly
+        fetchUsers();
       }
     } catch (error) {
       console.error("Failed to add user:", error);
     }
   };
 
-  // 5. HANDLER: Delete Employee
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure? This will permanently delete this user.")) {
       try {
@@ -96,7 +88,6 @@ export default function AdminUsers() {
 
   return (
     <div className="space-y-8">
-      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
@@ -115,7 +106,6 @@ export default function AdminUsers() {
       </div>
 
       <div className="bg-white border border-zinc-100 rounded-3xl overflow-hidden shadow-sm">
-        {/* Toolbar */}
         <div className="p-4 border-b border-zinc-50 bg-zinc-50/50 flex items-center justify-between">
           <div className="relative max-w-sm w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -141,8 +131,6 @@ export default function AdminUsers() {
             </select>
           </div>
         </div>
-
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-white border-b border-zinc-100">
@@ -245,8 +233,6 @@ export default function AdminUsers() {
           )}
         </div>
       </div>
-
-      {/* MODAL: ADD EMPLOYEE */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95">
@@ -288,8 +274,6 @@ export default function AdminUsers() {
                   placeholder="john@slooze.com"
                 />
               </div>
-
-              {/* PASSWORD INPUT HAS BEEN REMOVED FOR DEMO PURPOSES */}
               <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 font-medium">
                 <strong>Note:</strong> New users are automatically assigned the
                 demo password <code>password123</code> to ensure compatibility

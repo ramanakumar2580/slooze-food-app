@@ -17,12 +17,10 @@ import {
 export default function MemberDashboard() {
   const { user } = useUserStore();
 
-  // 1. Live State for Database Restaurants
   const [recommendedRestaurants, setRecommendedRestaurants] = useState<any[]>(
     [],
   );
 
-  // 2. Fetch Active Regional Restaurants
   useEffect(() => {
     const fetchRestaurants = async () => {
       if (!user) return;
@@ -30,11 +28,11 @@ export default function MemberDashboard() {
         const res = await fetch("/api/vendors");
         if (res.ok) {
           const allRestaurants = await res.json();
-          // FILTER: Only show restaurants that are ACTIVE and in the MEMBER'S REGION
+
           const regionalActiveRestaurants = allRestaurants.filter(
             (r: any) => r.isActive && r.region === user.country,
           );
-          // Just take the top 3 for the dashboard view
+
           setRecommendedRestaurants(regionalActiveRestaurants.slice(0, 3));
         }
       } catch (error) {
@@ -49,7 +47,6 @@ export default function MemberDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* 1. HERO BANNER */}
       <div className="relative overflow-hidden rounded-3xl bg-zinc-900 text-white p-8 md:p-12">
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-orange-500 rounded-full blur-3xl opacity-20" />
         <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-blue-500 rounded-full blur-3xl opacity-20" />
@@ -87,7 +84,6 @@ export default function MemberDashboard() {
         </div>
       </div>
 
-      {/* 2. CATEGORY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="p-6 bg-white rounded-2xl border border-zinc-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
           <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -129,7 +125,6 @@ export default function MemberDashboard() {
         </div>
       </div>
 
-      {/* 3. REAL-TIME RESTAURANTS SECTION */}
       <div>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-zinc-900">

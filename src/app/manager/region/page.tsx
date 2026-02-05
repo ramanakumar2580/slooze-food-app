@@ -14,21 +14,15 @@ import {
 
 export default function ManagerRegion() {
   const { user } = useUserStore();
-
-  // 1. Live State for Database Team
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [team, setTeam] = useState<any[]>([]);
-
-  // Local State for interactive controls (To be connected to DB settings table later)
   const [isOverdraftEnabled, setIsOverdraftEnabled] = useState(false);
   const [isOperationsStopped, setIsOperationsStopped] = useState(false);
 
-  // 2. Fetch Real Regional Team from Database
   useEffect(() => {
     const fetchTeam = async () => {
       if (!user) return;
       try {
-        // We fetch ALL users, then filter to show only Members in this Manager's country
         const res = await fetch("/api/users");
         if (res.ok) {
           const allUsers = await res.json();
@@ -50,7 +44,6 @@ export default function ManagerRegion() {
 
   return (
     <div className="space-y-8">
-      {/* 1. Region Header */}
       <div className="relative overflow-hidden rounded-3xl bg-white border border-zinc-200 p-8 shadow-sm">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
           <div className="flex items-center gap-6">
@@ -68,7 +61,6 @@ export default function ManagerRegion() {
                     ? "North America HQ"
                     : "India Operations"}
                 </h1>
-                {/* Dynamic Status Badge */}
                 {isOperationsStopped ? (
                   <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full border border-red-200 animate-pulse">
                     Halted
@@ -107,7 +99,6 @@ export default function ManagerRegion() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* 2. LIVE Team List Column */}
         <div className="lg:col-span-2 space-y-6">
           <h2 className="text-xl font-bold text-zinc-900">Regional Team</h2>
           <div className="bg-white border border-zinc-100 rounded-2xl overflow-hidden shadow-sm">
@@ -153,12 +144,10 @@ export default function ManagerRegion() {
           </div>
         </div>
 
-        {/* 3. Settings / Policy Column */}
         <div className="space-y-6">
           <h2 className="text-xl font-bold text-zinc-900">Regional Policy</h2>
 
           <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm space-y-6">
-            {/* OVERDRAFT TOGGLE */}
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="w-4 h-4 text-zinc-900" />
@@ -193,7 +182,6 @@ export default function ManagerRegion() {
               </div>
             </div>
 
-            {/* OPERATIONS SHUTDOWN TOGGLE */}
             <div className="pt-6 border-t border-zinc-50">
               <div className="flex items-center gap-2 mb-2">
                 <ShieldAlert

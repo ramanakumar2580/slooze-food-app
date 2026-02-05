@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { MenuItem } from "@/types";
 
-// UPDATED: Now includes 'restaurantId' so the database knows which vendor to send the order to.
 export interface CartItem extends MenuItem {
   uniqueId: string;
   restaurantId: string;
@@ -10,7 +9,7 @@ export interface CartItem extends MenuItem {
 
 interface CartState {
   items: CartItem[];
-  // UPDATED: 'addItem' now requires the restaurantId to be passed in
+
   addItem: (item: MenuItem & { restaurantId: string }) => void;
   removeItem: (uniqueId: string) => void;
   clearCart: () => void;

@@ -22,13 +22,10 @@ export default function MemberOrders() {
   const fetchMyOrders = useCallback(async () => {
     if (!user) return;
     try {
-      // 1. Fetch only PERSONAL orders
       const res = await fetch(`/api/orders?userId=${user.id}&view=MY_ORDERS`);
       if (res.ok) {
         const data = await res.json();
 
-        // 2. AUTO-DELIVERY LOGIC
-        // If order is > 30 mins old and still 'PREPARING', show as 'DELIVERED'
         const updatedOrders = data.map((order: any) => {
           const orderTime = new Date(order.createdAt).getTime();
           const thirtyMinsAgo = Date.now() - 30 * 60 * 1000;
@@ -85,7 +82,6 @@ export default function MemberOrders() {
         <p className="text-zinc-500 mt-2">
           Tracking personal orders for{" "}
           <span className="font-bold text-zinc-900 uppercase">
-            {/* FIX: If Admin, show Global, otherwise show their country */}
             {user.role === "ADMIN" ? "Global" : user.country}
           </span>{" "}
           Region
@@ -105,8 +101,6 @@ export default function MemberOrders() {
             const isDelivered = order.status === "DELIVERED";
             const isLoading = loadingAction === order.id;
 
-            // FIX: Get region from the RESTAURANT, not the user.
-            // This ensures Admin (USA) sees Rupees when ordering form India.
             const orderRegion = order.restaurant?.region || user.country;
 
             return (
@@ -134,7 +128,6 @@ export default function MemberOrders() {
                       {order.restaurant?.name.charAt(0) || "?"}
                     </div>
                     <div>
-                      {/* FIX: Added Region Badge next to Name */}
                       <h3 className="font-bold text-zinc-900 text-lg flex items-center gap-2">
                         {order.restaurant?.name || "Unknown Vendor"}
                         <span className="text-[10px] font-bold bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded-full border border-zinc-200 flex items-center gap-1">
@@ -168,7 +161,7 @@ export default function MemberOrders() {
                         Delivered
                       </span>
                     )}
-                    {/* FIX: Use orderRegion for correct currency symbol */}
+
                     <span className="font-black text-zinc-900 text-lg">
                       {formatPrice(order.totalAmount, orderRegion)}
                     </span>

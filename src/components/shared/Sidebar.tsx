@@ -30,7 +30,6 @@ export const Sidebar = () => {
     router.push("/login");
   };
 
-  // 1. Management Links (Only for Admins/Managers)
   const adminLinks = [
     { name: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Global Orders", href: "/admin/orders", icon: BarChart3 },
@@ -47,7 +46,6 @@ export const Sidebar = () => {
   ];
 
   const diningLinks = [
-    // Members get their Dashboard here. Admins/Managers have it in the Management section above.
     ...(user.role === "MEMBER"
       ? [
           {
@@ -61,8 +59,6 @@ export const Sidebar = () => {
     { name: "My Cart", href: "/member/cart", icon: ShoppingBag },
     { name: "My Orders", href: "/member/orders", icon: Clock },
   ];
-
-  // Resolve Management Links based on role
   let managementLinks: typeof adminLinks = [];
   if (user.role === "ADMIN") managementLinks = adminLinks;
   if (user.role === "MANAGER") managementLinks = managerLinks;
@@ -79,7 +75,6 @@ export const Sidebar = () => {
       </div>
 
       <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
-        {/* MANAGEMENT SECTION (Hidden for Members) */}
         {user.role !== "MEMBER" && (
           <div>
             <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3 px-2">
@@ -115,7 +110,6 @@ export const Sidebar = () => {
           </div>
         )}
 
-        {/* DINING SECTION (Visible to ALL) */}
         <div>
           <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3 px-2">
             Lunch & Dining
@@ -149,8 +143,6 @@ export const Sidebar = () => {
           </div>
         </div>
       </nav>
-
-      {/* USER PROFILE FOOTER */}
       <div className="p-4 border-t border-zinc-800 bg-zinc-900">
         <div className="flex items-center gap-3 mb-4 px-2 p-2 rounded-lg bg-zinc-800/50 border border-zinc-800">
           <div

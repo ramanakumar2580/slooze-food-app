@@ -14,8 +14,6 @@ import {
 
 export default function ManagerDashboard() {
   const { user } = useUserStore();
-
-  // 1. Live State
   const [stats, setStats] = useState({
     orderCount: 0,
     pendingApprovals: 0,
@@ -25,28 +23,21 @@ export default function ManagerDashboard() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [teamOrders, setTeamOrders] = useState<any[]>([]);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
-
-  // 2. Fetch Regional Data
   const fetchDashboardData = useCallback(async () => {
     if (!user) return;
 
     try {
-      // Fetch Stats (Filtered by Manager's Country)
       const statsRes = await fetch(
         `/api/dashboard?role=MANAGER&country=${user.country}`,
       );
       if (statsRes.ok) setStats(await statsRes.json());
 
-      // Fetch Team Orders (Filtered by Manager's Country)
       const ordersRes = await fetch(
         `/api/orders?view=TEAM_ORDERS&role=MANAGER&country=${user.country}`,
       );
 
       if (ordersRes.ok) {
         const data = await ordersRes.json();
-
-        // FIX: Filter out orders placed by ADMINs.
-        // Managers should only see orders from MEMBER or MANAGER roles.
         const employeeOrders = data.filter(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (order: any) => order.user?.role !== "ADMIN",
@@ -61,11 +52,10 @@ export default function ManagerDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 5000); // Auto-refresh every 5s
+    const interval = setInterval(fetchDashboardData, 5000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
-  // 3. HANDLER: Approve Payment
   const handleApprove = async (orderId: string) => {
     setLoadingAction(orderId);
     try {
@@ -79,7 +69,7 @@ export default function ManagerDashboard() {
         }),
       });
 
-      if (res.ok) fetchDashboardData(); // Instantly refresh UI
+      if (res.ok) fetchDashboardData();
     } catch (error) {
       console.error("Approval failed:", error);
     } finally {
@@ -87,7 +77,6 @@ export default function ManagerDashboard() {
     }
   };
 
-  // 4. HANDLER: Reject Order
   const handleReject = async (orderId: string) => {
     if (!confirm("Are you sure you want to reject this team order?")) return;
     setLoadingAction(orderId);
@@ -111,15 +100,12 @@ export default function ManagerDashboard() {
 
   if (!user) return null;
 
-  // 5. REGION-SPECIFIC HELPERS
   const isIndia = user.country === "INDIA";
   const currencyCode = isIndia ? "INR" : "USD";
   const locale = isIndia ? "en-IN" : "en-US";
 
-  // Select the correct revenue figure from backend stats
   const totalRevenue = isIndia ? stats.revenueINR : stats.revenueUSD;
 
-  // Dynamic Budget Limit: ₹8,30,000 for India vs $10,000 for USA
   const budgetLimit = isIndia ? 830000 : 10000;
   const budgetPercentage = (totalRevenue / budgetLimit) * 100;
 
@@ -150,7 +136,6 @@ export default function ManagerDashboard() {
         </button>
       </div>
 
-      {/* REGIONAL STATS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="p-6 bg-white rounded-2xl border border-zinc-100 shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -199,8 +184,6 @@ export default function ManagerDashboard() {
           </p>
         </div>
       </div>
-
-      {/* TEAM ORDERS TABLE */}
       <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-zinc-100 flex justify-between items-center">
           <h3 className="font-bold text-zinc-900 text-lg">
@@ -235,7 +218,6 @@ export default function ManagerDashboard() {
                     order.status !== "CANCELLED";
                   const isLoading = loadingAction === order.id;
 
-                  // Summarize items for the table
                   const itemSummary = order.orderItems
                     .map(
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any

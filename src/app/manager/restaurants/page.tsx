@@ -8,18 +8,15 @@ import { MapPin, Power, Store, Utensils, Loader2 } from "lucide-react";
 export default function ManagerRestaurants() {
   const { user } = useUserStore();
 
-  // 1. Live State for Database Restaurants
   const [restaurants, setRestaurants] = useState<any[]>([]);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  // 2. Fetch Real Restaurants (Filtered by Manager's Region)
   const fetchRestaurants = async () => {
     if (!user) return;
     try {
       const res = await fetch("/api/vendors");
       if (res.ok) {
         const allRestaurants = await res.json();
-        // Filter to only show restaurants in the Manager's country
         const myRegionRestaurants = allRestaurants.filter(
           (r: any) => r.region === user.country,
         );
@@ -35,7 +32,6 @@ export default function ManagerRestaurants() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // 3. HANDLER: Toggle Restaurant Status in Database
   const toggleStatus = async (id: string, currentStatus: boolean) => {
     setLoadingAction(id);
     try {
@@ -46,7 +42,7 @@ export default function ManagerRestaurants() {
       });
 
       if (res.ok) {
-        fetchRestaurants(); // Refresh to show new status
+        fetchRestaurants();
       }
     } catch (error) {
       console.error("Failed to update status:", error);
@@ -153,8 +149,6 @@ export default function ManagerRestaurants() {
                   </button>
                 </div>
               </div>
-
-              {/* Visual stripe at bottom */}
               <div
                 className={`h-1.5 w-full ${isActive ? "bg-orange-500" : "bg-zinc-300"}`}
               />

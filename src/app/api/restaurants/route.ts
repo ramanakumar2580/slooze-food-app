@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -6,12 +7,10 @@ export async function GET(request: Request) {
   const region = searchParams.get("region");
 
   try {
-    // 1. Fetch restaurants from DB
-    // If region is provided, filter by it. Otherwise, return all (for Admin).
     const restaurants = await prisma.restaurant.findMany({
       where: region && region !== "ALL" ? { region } : {},
       include: {
-        menu: true, // Includes the MenuItem array for each restaurant
+        menu: true,
       },
     });
 
@@ -25,7 +24,6 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Add a new restaurant (Admin only)
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -36,7 +34,7 @@ export async function POST(request: Request) {
         name,
         region,
         menu: {
-          create: menuItems, // Creates associated menu items at the same time
+          create: menuItems,
         },
       },
       include: { menu: true },

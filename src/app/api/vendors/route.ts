@@ -1,12 +1,12 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET: Fetch ALL vendors/restaurants (No limits)
 export async function GET() {
   try {
     const vendors = await prisma.restaurant.findMany({
-      include: { menu: true }, // Includes all menu items
-      orderBy: { createdAt: "desc" }, // Newest first
+      include: { menu: true },
+      orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(vendors);
   } catch {
@@ -17,7 +17,6 @@ export async function GET() {
   }
 }
 
-// POST: Add a new vendor/restaurant
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -33,13 +32,11 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE: Remove a vendor
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
 
   try {
-    // Delete all menu items first, then delete the restaurant
     await prisma.menuItem.deleteMany({ where: { restaurantId: id as string } });
     await prisma.restaurant.delete({ where: { id: id as string } });
     return NextResponse.json({ success: true });

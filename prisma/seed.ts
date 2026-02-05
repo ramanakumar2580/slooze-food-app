@@ -3,16 +3,14 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting database seeding...");
+  console.log(" Starting database seeding...");
 
-  // 1. CLEANUP (Optional: Clears database so you can re-run this script safely)
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.menuItem.deleteMany();
   await prisma.restaurant.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. CREATE USERS (Based strictly on the Assignment Doc)
   const users = await Promise.all([
     prisma.user.create({
       data: {
@@ -70,13 +68,11 @@ async function main() {
     }),
   ]);
 
-  // Using the 'users' variable to fix the warning
   console.log(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    `✅ Created ${users.length} Users: ${users.map((u: { name: any }) => u.name).join(", ")}`,
+    `Created ${users.length} Users: ${users.map((u: { name: any }) => u.name).join(", ")}`,
   );
 
-  // 3. CREATE RESTAURANTS & MENU (India & USA)
   const spiceGarden = await prisma.restaurant.create({
     data: {
       name: "Spice Garden",
@@ -133,8 +129,7 @@ async function main() {
     },
   });
 
-  // Using the restaurant variables to fix the warnings
-  console.log("✅ Created 4 Restaurants:");
+  console.log("Created 4 Restaurants:");
   console.log(`  - ${spiceGarden.name} (${spiceGarden.region})`);
   console.log(`  - ${dosaPlaza.name} (${dosaPlaza.region})`);
   console.log(`  - ${libertyBurger.name} (${libertyBurger.region})`);

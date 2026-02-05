@@ -14,13 +14,10 @@ import {
 
 export default function ManagerOrders() {
   const { user } = useUserStore();
-
-  // 1. Live State for Database Orders
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  // 2. Fetch Team Orders (Filtered by Manager's Country & Role)
   const fetchOrders = useCallback(async () => {
     if (!user) return;
 
@@ -31,7 +28,6 @@ export default function ManagerOrders() {
       if (res.ok) {
         const data = await res.json();
 
-        // FIX: Filter out ADMIN orders. Managers should only manage employees.
         const employeeOrders = data.filter(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (order: any) => order.user?.role !== "ADMIN",
@@ -46,11 +42,10 @@ export default function ManagerOrders() {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 5000); // Refresh every 5s
+    const interval = setInterval(fetchOrders, 5000);
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  // 3. ACTION: Approve and Process Corporate Payment
   const handleApproveAndPay = async (
     id: string,
     employeeName: string,
@@ -60,7 +55,7 @@ export default function ManagerOrders() {
       !confirm(
         `Approve order for ${employeeName} and charge ${formatPrice(
           price,
-          user?.country || "USA", // Fallback to avoid TS error
+          user?.country || "USA",
         )} to Corporate Card?`,
       )
     )
@@ -80,7 +75,7 @@ export default function ManagerOrders() {
       });
 
       if (res.ok) {
-        fetchOrders(); // Refresh table
+        fetchOrders();
       }
     } catch (error) {
       console.error("Payment failed:", error);
@@ -89,7 +84,6 @@ export default function ManagerOrders() {
     }
   };
 
-  // 4. ACTION: Reject Order
   const handleReject = async (id: string) => {
     if (!confirm("Are you sure you want to reject this team order?")) return;
 
@@ -130,7 +124,6 @@ export default function ManagerOrders() {
           </p>
         </div>
 
-        {/* Visual indicator that this page uses the Corporate Card */}
         <div className="flex items-center gap-3 bg-zinc-900 text-white px-4 py-2 rounded-xl shadow-lg">
           <CreditCard className="w-5 h-5 text-zinc-400" />
           <div className="text-left">
@@ -174,7 +167,6 @@ export default function ManagerOrders() {
                   order.status !== "CANCELLED";
                 const isLoading = loadingAction === order.id;
 
-                // Summarize items for the table
                 const itemSummary = order.orderItems
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   .map((item: any) => `${item.menuItem.name} x${item.quantity}`)

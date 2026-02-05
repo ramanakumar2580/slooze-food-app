@@ -12,10 +12,10 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role      String   @default("MEMBER") // ADMIN, MANAGER, MEMBER
-  country   String   @default("USA")    // INDIA, USA
-  isActive  Boolean  @default(true)     // For Admin Employee Management
-  managerId String?                     // Links a MEMBER to a specific MANAGER
+  role      String   @default("MEMBER") 
+  country   String   @default("USA")    
+  isActive  Boolean  @default(true)     
+  managerId String?                    
   createdAt DateTime @default(now())
 
   orders    Order[]
@@ -25,9 +25,9 @@ model User {
 model Restaurant {
   id        String   @id @default(uuid())
   name      String
-  region    String   // INDIA, USA
-  isActive  Boolean  @default(true)     // For Vendor Management
-  ownerId   String?                     // Manager ID who owns this vendor
+  region    String   
+  isActive  Boolean  @default(true)     
+  ownerId   String?                     
   createdAt DateTime @default(now())
 
   menu      MenuItem[]
@@ -52,10 +52,10 @@ model Order {
   totalAmount   Float
   
   // Workflows
-  status        String   @default("PENDING") // PENDING, PREPARING, DELIVERED, CANCELLED
-  paymentStatus String   @default("PENDING") // PENDING, PAID, REJECTED
-  approvalBy    String?                      // ID of Manager/Admin who approved
-  isGlobal      Boolean  @default(false)     // True if visible in Global Dashboard
+  status        String   @default("PENDING") 
+  paymentStatus String   @default("PENDING") 
+  approvalBy    String?                      
+  isGlobal      Boolean  @default(false)    
   
   createdAt     DateTime @default(now())
 

@@ -4,13 +4,13 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserStore } from "@/store/useUserStore";
-import { useCartStore } from "@/store/useCartStore"; // Import Cart Store
-import { LogOut, User, ShoppingCart } from "lucide-react"; // Added ShoppingCart
+import { useCartStore } from "@/store/useCartStore";
+import { LogOut, User, ShoppingCart } from "lucide-react";
 
 export const Navbar = () => {
   const pathname = usePathname();
   const { user } = useUserStore();
-  const { items } = useCartStore(); // Get items from cart
+  const { items } = useCartStore();
 
   const isLanding = pathname === "/";
   const isLogin = pathname === "/login";
@@ -41,7 +41,6 @@ export const Navbar = () => {
           </Link>
         ) : (
           <div className="flex items-center gap-3">
-            {/* Cart Button with Real Count */}
             <Link
               href="/member/cart"
               className="relative p-2.5 mr-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 rounded-xl transition-all hover:scale-105 active:scale-95"

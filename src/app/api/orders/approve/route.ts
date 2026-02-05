@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -5,8 +6,6 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { orderId, approverId, approverRole } = body;
-
-    // 1. Security Check: Only Managers and Admins can approve payments
     if (approverRole === "MEMBER") {
       return NextResponse.json(
         { error: "Unauthorized: Members cannot approve payments." },
@@ -14,13 +13,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Update the database
     const approvedOrder = await prisma.order.update({
       where: { id: orderId },
       data: {
         paymentStatus: "PAID",
-        status: "PREPARING", // Moves order to the kitchen/vendor
-        approvalBy: approverId, // Records who approved it
+        status: "PREPARING",
+        approvalBy: approverId,
       },
     });
 
