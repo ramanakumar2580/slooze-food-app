@@ -1,3 +1,6 @@
+// FIX: Force this route to be dynamic to prevent Vercel build errors
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
