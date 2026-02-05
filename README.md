@@ -42,42 +42,43 @@ Data is siloed by region. The Node.js backend detects the user's `country` conte
 
 ### 1. Clone the repository
 
-\`\`\`bash
+```bash
 git clone https://github.com/ramanakumar2580/slooze-food-app.git
 cd slooze-food-app
-\`\`\`
+```
 
 ### 2. Install dependencies
 
-\`\`\`bash
+```bash
 npm install
-\`\`\`
+```
 
 ### 3. Set up your environment variables
 
 Create a `.env` file in the root directory and add your NeonDB connection string:
-\`\`\`env
+
+```bash
 DATABASE_URL="postgresql://user:password@endpoint.neon.tech/slooze?sslmode=require"
-\`\`\`
+```
 
 ### 4. Push the schema to the database
 
-\`\`\`bash
+```bash
 npx prisma db push
 npx prisma generate
-\`\`\`
+```
 
 ### 5. Seed the database with test data
 
-\`\`\`bash
+```bash
 npx prisma db seed
-\`\`\`
+```
 
 ### 6. Run the development server
 
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
