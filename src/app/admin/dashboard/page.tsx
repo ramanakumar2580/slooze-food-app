@@ -109,14 +109,14 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-4 bg-zinc-900 p-2 rounded-2xl text-white shadow-lg">
-          <div className="flex bg-zinc-800 rounded-xl p-1">
+        <div className="flex items-center gap-4">
+          <div className="flex bg-zinc-900 rounded-xl p-1 shadow-lg">
             <button
               onClick={() => setAdminRegion("ALL")}
               className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 adminRegion === "ALL"
                   ? "bg-white text-zinc-900"
-                  : "text-zinc-400"
+                  : "text-zinc-400 hover:text-white"
               }`}
             >
               <Earth className="w-3 h-3" /> Global
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
               className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 adminRegion === "USA"
                   ? "bg-white text-zinc-900"
-                  : "text-zinc-400"
+                  : "text-zinc-400 hover:text-white"
               }`}
             >
               <Globe2 className="w-3 h-3" /> USA
@@ -136,20 +136,19 @@ export default function AdminDashboard() {
               className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 adminRegion === "INDIA"
                   ? "bg-white text-zinc-900"
-                  : "text-zinc-400"
+                  : "text-zinc-400 hover:text-white"
               }`}
             >
               <MapPin className="w-3 h-3" /> IND
             </button>
           </div>
-          <div className="w-px h-6 bg-zinc-700" />
-          <div className="flex bg-zinc-800 rounded-xl p-1">
+          <div className="flex bg-zinc-900 rounded-xl p-1 shadow-lg">
             <button
               onClick={() => setAdminCurrency("USD")}
               className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 adminCurrency === "USD"
                   ? "bg-orange-600 text-white"
-                  : "text-zinc-400"
+                  : "text-zinc-400 hover:text-white"
               }`}
             >
               <DollarSign className="w-3 h-3" /> USD
@@ -159,7 +158,7 @@ export default function AdminDashboard() {
               className={`flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                 adminCurrency === "INR"
                   ? "bg-orange-600 text-white"
-                  : "text-zinc-400"
+                  : "text-zinc-400 hover:text-white"
               }`}
             >
               <IndianRupee className="w-3 h-3" /> INR
@@ -191,8 +190,8 @@ export default function AdminDashboard() {
         </div>
 
         <Link
-          href="/admin/employees"
           className="group bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm hover:border-blue-200 hover:shadow-md transition-all cursor-pointer"
+          href={""}
         >
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-blue-100 rounded-lg group-hover:scale-110 transition-transform">
@@ -260,19 +259,28 @@ export default function AdminDashboard() {
 
                 return (
                   <div key={order.id} className="flex items-center gap-4 group">
-                    <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-zinc-500 text-xs uppercase group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-zinc-500 text-xs uppercase group-hover:bg-orange-100 group-hover:text-orange-600 transition-colors flex-shrink-0">
                       {order.user?.name.substring(0, 2) || "U"}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-zinc-900">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-zinc-900 truncate flex items-center gap-2">
                         {order.user?.name || "Unknown User"} placed an order
+                        {/* ✅ GROUP ORDER BADGE VISIBLE IN ADMIN DASHBOARD */}
+                        {order.isGroupOrder && (
+                          <span className="text-[9px] font-black bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full uppercase tracking-wider flex-shrink-0">
+                            {order.groupOrder?.name || "SQUAD"}
+                          </span>
+                        )}
                       </p>
-                      <p className="text-xs text-zinc-500">
-                        {new Date(order.createdAt).toLocaleTimeString()} •{" "}
-                        {order.restaurant?.name} ({order.restaurant?.region})
+                      <p className="text-xs text-zinc-500 mt-0.5 truncate">
+                        {new Date(order.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        • {order.restaurant?.name} ({order.restaurant?.region})
                       </p>
                     </div>
-                    <span className="text-sm font-black text-zinc-900">
+                    <span className="text-sm font-black text-zinc-900 flex-shrink-0">
                       {new Intl.NumberFormat(
                         adminCurrency === "INR" ? "en-IN" : "en-US",
                         {

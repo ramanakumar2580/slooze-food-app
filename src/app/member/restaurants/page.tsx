@@ -15,6 +15,7 @@ import {
   Globe2,
   Building2,
   Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 export default function MemberRestaurants() {
@@ -25,6 +26,13 @@ export default function MemberRestaurants() {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewRegion, setViewRegion] = useState("USA");
 
+  // New state for our custom warning modal
+  const [showWarning, setShowWarning] = useState(false);
+  const [pendingCartAction, setPendingCartAction] = useState<{
+    item: any;
+    restaurant: any;
+  } | null>(null);
+
   useEffect(() => {
     if (user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -32,52 +40,62 @@ export default function MemberRestaurants() {
     }
   }, [user]);
 
+  // Fetch Restaurants (Polling)
   useEffect(() => {
-    const fetchRestaurants = async () => {
+    const fetchData = async () => {
       if (!user) return;
       try {
-        const res = await fetch("/api/vendors");
-        if (res.ok) {
-          const allRestaurants = await res.json();
-          const activeRestaurants = allRestaurants.filter(
-            (r: any) => r.isActive,
-          );
-          setRestaurants(activeRestaurants);
+        // Fetch vendors
+        const resVendors = await fetch("/api/vendors");
+        if (resVendors.ok) {
+          const allRestaurants = await resVendors.json();
+          setRestaurants(allRestaurants.filter((r: any) => r.isActive));
         }
       } catch (error) {
-        console.error("Failed to fetch restaurants:", error);
+        console.error("Failed to fetch data:", error);
       }
     };
-    fetchRestaurants();
+
+    fetchData();
+    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
   }, [user]);
 
   const handleAddItem = (item: any, restaurant: any) => {
+    // Standard Personal Cart Logic (with restaurant mismatch check)
     if (items.length > 0) {
       const currentCartItem = items[0] as any;
-      const cartRegion = currentCartItem.region;
+      const cartRestaurantId = currentCartItem.restaurantId;
 
-      if (cartRegion && cartRegion !== restaurant.region) {
-        const confirmSwitch = window.confirm(
-          `Your cart contains items from ${cartRegion}.\n\nDo you want to clear your cart and start a new order from ${restaurant.region}?`,
-        );
-
-        if (confirmSwitch) {
-          clearCart();
-          addItem({
-            ...item,
-            restaurantId: restaurant.id,
-            region: restaurant.region,
-          });
-        }
+      if (cartRestaurantId && cartRestaurantId !== restaurant.id) {
+        setPendingCartAction({ item, restaurant });
+        setShowWarning(true);
         return;
       }
     }
+
     addItem({
       ...item,
       restaurantId: restaurant.id,
       region: restaurant.region,
+      restaurantName: restaurant.name,
     });
   };
+
+  const handleConfirmReplace = () => {
+    if (pendingCartAction) {
+      clearCart();
+      addItem({
+        ...pendingCartAction.item,
+        restaurantId: pendingCartAction.restaurant.id,
+        region: pendingCartAction.restaurant.region,
+        restaurantName: pendingCartAction.restaurant.name,
+      });
+      setShowWarning(false);
+      setPendingCartAction(null);
+    }
+  };
+
   const getItemQuantity = (itemId: string) => {
     const cartItems = items.filter((i) => i.id === itemId);
     return cartItems.length;
@@ -261,6 +279,49 @@ export default function MemberRestaurants() {
           </div>
         )}
       </div>
+
+      {/* CUSTOM WARNING MODAL */}
+      {showWarning && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-3xl max-w-sm w-full shadow-2xl transform transition-all">
+            <div className="flex items-center gap-3 mb-4 text-orange-600">
+              <div className="p-3 bg-orange-100 rounded-full">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-black text-zinc-900">
+                Replace Cart?
+              </h3>
+            </div>
+
+            <p className="text-zinc-500 mb-8 leading-relaxed text-sm font-medium">
+              Your cart currently contains food from a different restaurant.
+              Would you like to clear your cart and start a new order from{" "}
+              <span className="font-bold text-zinc-900">
+                {pendingCartAction?.restaurant.name}
+              </span>
+              ?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowWarning(false);
+                  setPendingCartAction(null);
+                }}
+                className="flex-1 px-4 py-3 bg-zinc-100 text-zinc-700 font-bold rounded-xl hover:bg-zinc-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReplace}
+                className="flex-1 px-4 py-3 bg-orange-600 text-white font-bold rounded-xl hover:bg-orange-700 transition-colors shadow-lg shadow-orange-600/20"
+              >
+                Start New
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

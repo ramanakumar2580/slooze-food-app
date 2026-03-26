@@ -10,6 +10,7 @@ import {
   DollarSign,
   IndianRupee,
   Earth,
+  Users, // Added icon for squad badge
 } from "lucide-react";
 
 const USD_TO_INR = 83;
@@ -93,19 +94,19 @@ export default function AdminOrders() {
           <div className="flex bg-zinc-800 rounded-xl p-1">
             <button
               onClick={() => setAdminRegion("ALL")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminRegion === "ALL" ? "bg-white text-zinc-900" : "text-zinc-400"}`}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminRegion === "ALL" ? "bg-white text-zinc-900" : "text-zinc-400 hover:text-white"}`}
             >
               <Earth className="w-3 h-3 mr-1 inline" /> Global
             </button>
             <button
               onClick={() => setAdminRegion("USA")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminRegion === "USA" ? "bg-white text-zinc-900" : "text-zinc-400"}`}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminRegion === "USA" ? "bg-white text-zinc-900" : "text-zinc-400 hover:text-white"}`}
             >
               <Globe2 className="w-3 h-3 mr-1 inline" /> USA
             </button>
             <button
               onClick={() => setAdminRegion("INDIA")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminRegion === "INDIA" ? "bg-white text-zinc-900" : "text-zinc-400"}`}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminRegion === "INDIA" ? "bg-white text-zinc-900" : "text-zinc-400 hover:text-white"}`}
             >
               <MapPin className="w-3 h-3 mr-1 inline" /> IND
             </button>
@@ -114,13 +115,13 @@ export default function AdminOrders() {
           <div className="flex bg-zinc-800 rounded-xl p-1">
             <button
               onClick={() => setAdminCurrency("USD")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminCurrency === "USD" ? "bg-orange-600 text-white" : "text-zinc-400"}`}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminCurrency === "USD" ? "bg-orange-600 text-white" : "text-zinc-400 hover:text-white"}`}
             >
               <DollarSign className="w-3 h-3" />
             </button>
             <button
               onClick={() => setAdminCurrency("INR")}
-              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminCurrency === "INR" ? "bg-orange-600 text-white" : "text-zinc-400"}`}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${adminCurrency === "INR" ? "bg-orange-600 text-white" : "text-zinc-400 hover:text-white"}`}
             >
               <IndianRupee className="w-3 h-3" />
             </button>
@@ -153,7 +154,7 @@ export default function AdminOrders() {
                 ).format(totalVolume)}
               </p>
             </div>
-            <button className="h-12 w-12 flex items-center justify-center bg-zinc-900 text-white rounded-xl shadow-md">
+            <button className="h-12 w-12 flex items-center justify-center bg-zinc-900 text-white rounded-xl shadow-md hover:bg-zinc-800 transition-colors">
               <Download className="w-5 h-5" />
             </button>
           </div>
@@ -208,8 +209,19 @@ export default function AdminOrders() {
                           {order.restaurant?.region}
                         </span>
                       </td>
-                      <td className="px-6 py-4 font-bold text-zinc-900">
-                        {order.user?.name}
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-zinc-900">
+                          {order.user?.name}
+                        </div>
+                        {/* ✅ GROUP ORDER BADGE VISIBLE HERE */}
+                        {order.isGroupOrder && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border border-blue-100">
+                              <Users className="w-3 h-3" />
+                              {order.groupOrder?.name || "SQUAD"}
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 leading-tight">
                         <p className="font-semibold text-zinc-800 truncate max-w-[150px]">
@@ -227,7 +239,7 @@ export default function AdminOrders() {
                       </td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase ${displayStatus === "DELIVERED" ? "text-green-600 bg-green-50" : "bg-zinc-100 text-zinc-500"}`}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase ${displayStatus === "DELIVERED" ? "text-green-600 bg-green-50 border border-green-100" : "bg-zinc-100 text-zinc-500 border border-zinc-200"}`}
                         >
                           {displayStatus}
                         </span>
@@ -238,7 +250,7 @@ export default function AdminOrders() {
               ) : (
                 <tr>
                   <td colSpan={6} className="py-20 text-center text-zinc-400">
-                    No orders.
+                    No orders found.
                   </td>
                 </tr>
               )}

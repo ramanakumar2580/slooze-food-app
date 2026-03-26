@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -8,13 +9,12 @@ import {
   XCircle,
   Clock,
   CreditCard,
-  Send,
   Loader2,
+  Users,
 } from "lucide-react";
 
 export default function ManagerOrders() {
   const { user } = useUserStore();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
@@ -22,19 +22,125 @@ export default function ManagerOrders() {
     if (!user) return;
 
     try {
-      const res = await fetch(
+      let employeeOrders: any[] = [];
+      const ordersRes = await fetch(
         `/api/orders?view=TEAM_ORDERS&role=MANAGER&country=${user.country}`,
+        { cache: "no-store" },
       );
-      if (res.ok) {
-        const data = await res.json();
-
-        const employeeOrders = data.filter(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (ordersRes.ok) {
+        const data = await ordersRes.json();
+        employeeOrders = data.filter(
           (order: any) => order.user?.role !== "ADMIN",
         );
-
-        setOrders(employeeOrders);
       }
+
+      let groupsData: any[] = [];
+      const groupsRes = await fetch(`/api/groups?region=${user.country}`, {
+        cache: "no-store",
+      });
+      if (groupsRes.ok) {
+        groupsData = await groupsRes.json();
+      }
+
+      const enrichedEmployeeOrders = employeeOrders.map((order) => {
+        if (order.isGroupOrder && order.groupOrderId) {
+          const foundGroup = groupsData.find(
+            (g) => g.id === order.groupOrderId,
+          );
+          if (foundGroup) {
+            return {
+              ...order,
+              groupName: foundGroup.name,
+              membersList: foundGroup.members
+                ?.map((m: any) => m.name)
+                .join(", "),
+            };
+          }
+        }
+        return order;
+      });
+
+      const groupOrdersMap: any[] = [];
+
+      groupsData.forEach((g: any) => {
+        if (!g.items || g.items.length === 0) return;
+
+        const sessionMap: Record<string, any[]> = {};
+        g.items.forEach((item: any) => {
+          const rId = item.menuItem?.restaurantId || "unknown";
+
+          const timeKey = item.addedAt
+            ? new Date(item.addedAt).toISOString().substring(0, 16)
+            : item.id;
+          const sessionKey = `${item.userId}-${rId}-${timeKey}`;
+
+          if (!sessionMap[sessionKey]) sessionMap[sessionKey] = [];
+          sessionMap[sessionKey].push(item);
+        });
+
+        const membersList =
+          g.members?.map((m: any) => m.name).join(", ") || "Unknown";
+
+        Object.entries(sessionMap).forEach(([sessionKey, itemsArr]) => {
+          const sUserId = itemsArr[0].userId;
+          const sRestaurantId = itemsArr[0].menuItem?.restaurantId;
+          const restaurantName =
+            itemsArr[0].menuItem?.restaurant?.name || "Unknown Vendor";
+          const itemIds = itemsArr.map((i: any) => i.id);
+
+          const total = itemsArr.reduce(
+            (sum, i) => sum + (i.menuItem?.price || 0) * i.quantity,
+            0,
+          );
+          const sessionUser = itemsArr[0].user || { name: "Squad Member" };
+
+          groupOrdersMap.push({
+            id: g.id,
+            groupName: g.name,
+            membersList: membersList,
+            sessionId: `${g.id}-${sessionKey}`,
+            sessionUserId: sUserId,
+            sessionRestaurantId: sRestaurantId,
+            itemIds: itemIds,
+            isGroupOrder: true,
+            user: { name: sessionUser.name },
+            restaurant: { name: restaurantName },
+            orderItems: itemsArr,
+            status:
+              g.status === "OPEN" || g.status === "SUBMITTED"
+                ? "PENDING"
+                : g.status,
+            paymentStatus:
+              g.status === "OPEN" || g.status === "SUBMITTED"
+                ? "PENDING"
+                : g.status === "APPROVED"
+                  ? "PAID"
+                  : "REJECTED",
+            totalAmount: total,
+            createdAt: itemsArr[0].addedAt || g.createdAt,
+          });
+        });
+      });
+
+      // Sort: Keep Pending at the top, then sort by newest date
+      const combinedOrders = [
+        ...enrichedEmployeeOrders,
+        ...groupOrdersMap,
+      ].sort((a, b) => {
+        const aIsPending =
+          a.paymentStatus === "PENDING" && a.status !== "CANCELLED";
+        const bIsPending =
+          b.paymentStatus === "PENDING" && b.status !== "CANCELLED";
+
+        if (aIsPending && !bIsPending) return -1;
+        if (!aIsPending && bIsPending) return 1;
+
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      });
+
+      setOrders(combinedOrders);
     } catch (error) {
       console.error("Failed to fetch team orders:", error);
     }
@@ -47,35 +153,41 @@ export default function ManagerOrders() {
   }, [fetchOrders]);
 
   const handleApproveAndPay = async (
-    id: string,
-    employeeName: string,
-    price: number,
+    orderId: string,
+    isGroupOrder?: boolean,
+    sessionId?: string,
+    sessionUserId?: string,
+    sessionRestaurantId?: string,
+    itemIds?: string[],
   ) => {
-    if (
-      !confirm(
-        `Approve order for ${employeeName} and charge ${formatPrice(
-          price,
-          user?.country || "USA",
-        )} to Corporate Card?`,
-      )
-    )
-      return;
+    if (!confirm("Approve order and charge to Corporate Card?")) return;
 
-    setLoadingAction(id);
+    setLoadingAction(sessionId || orderId);
 
     try {
-      const res = await fetch("/api/orders/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderId: id,
-          approverId: user?.id,
-          approverRole: user?.role,
-        }),
-      });
-
-      if (res.ok) {
-        fetchOrders();
+      if (isGroupOrder && sessionUserId) {
+        const res = await fetch(`/api/groups/${orderId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "APPROVED",
+            approveUserId: sessionUserId,
+            restaurantId: sessionRestaurantId,
+            itemIds: itemIds,
+          }),
+        });
+        if (res.ok) fetchOrders();
+      } else {
+        const res = await fetch("/api/orders/approve", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            approverId: user?.id,
+            approverRole: user?.role,
+          }),
+        });
+        if (res.ok) fetchOrders();
       }
     } catch (error) {
       console.error("Payment failed:", error);
@@ -84,21 +196,41 @@ export default function ManagerOrders() {
     }
   };
 
-  const handleReject = async (id: string) => {
+  const handleReject = async (
+    orderId: string,
+    isGroupOrder?: boolean,
+    sessionId?: string,
+    sessionUserId?: string,
+    sessionRestaurantId?: string,
+    itemIds?: string[],
+  ) => {
     if (!confirm("Are you sure you want to reject this team order?")) return;
 
-    setLoadingAction(id);
+    setLoadingAction(sessionId || orderId);
     try {
-      const res = await fetch(`/api/orders/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "CANCELLED",
-          paymentStatus: "REJECTED",
-        }),
-      });
-
-      if (res.ok) fetchOrders();
+      if (isGroupOrder && sessionUserId) {
+        const res = await fetch(`/api/groups/${orderId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "CANCELLED",
+            rejectUserId: sessionUserId,
+            restaurantId: sessionRestaurantId,
+            itemIds: itemIds,
+          }),
+        });
+        if (res.ok) fetchOrders();
+      } else {
+        const res = await fetch(`/api/orders/${orderId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "CANCELLED",
+            paymentStatus: "REJECTED",
+          }),
+        });
+        if (res.ok) fetchOrders();
+      }
     } catch (error) {
       console.error("Rejection failed:", error);
     } finally {
@@ -136,26 +268,26 @@ export default function ManagerOrders() {
       </div>
 
       <div className="bg-white border border-zinc-100 rounded-3xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 border-b border-zinc-100">
+        <div className="overflow-auto max-h-[600px] custom-scrollbar">
+          <table className="w-full text-left text-sm relative">
+            <thead className="bg-zinc-50 border-b border-zinc-100 sticky top-0 z-10 shadow-sm outline outline-1 outline-zinc-100">
               <tr>
-                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs">
+                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs bg-zinc-50">
                   Employee
                 </th>
-                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs">
+                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs bg-zinc-50">
                   Order Details
                 </th>
-                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs">
+                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs bg-zinc-50">
                   Time
                 </th>
-                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs">
+                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs bg-zinc-50">
                   Total
                 </th>
-                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs">
+                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs bg-zinc-50">
                   Status
                 </th>
-                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs text-right">
+                <th className="px-8 py-5 font-bold text-zinc-500 uppercase tracking-wider text-xs text-right bg-zinc-50">
                   Actions
                 </th>
               </tr>
@@ -165,44 +297,91 @@ export default function ManagerOrders() {
                 const isPending =
                   order.paymentStatus === "PENDING" &&
                   order.status !== "CANCELLED";
-                const isLoading = loadingAction === order.id;
+                const isLoading =
+                  loadingAction === (order.sessionId || order.id);
 
-                const itemSummary = order.orderItems
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  .map((item: any) => `${item.menuItem.name} x${item.quantity}`)
+                const aggregatedItems = order.orderItems.reduce(
+                  (acc: any[], curr: any) => {
+                    const existing = acc.find(
+                      (i: any) => i.menuItemId === curr.menuItemId,
+                    );
+                    if (existing) {
+                      existing.quantity += curr.quantity;
+                    } else {
+                      acc.push({ ...curr });
+                    }
+                    return acc;
+                  },
+                  [],
+                );
+
+                const itemSummary = aggregatedItems
+                  .map(
+                    (item: any) =>
+                      `${item.menuItem?.name || "Item"} x${item.quantity}`,
+                  )
                   .join(", ");
 
                 return (
                   <tr
-                    key={order.id}
+                    key={order.sessionId || order.id}
                     className="group hover:bg-zinc-50/50 transition-colors"
                   >
-                    <td className="px-8 py-6">
+                    <td className="px-8 py-6 align-top">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-zinc-500 text-xs uppercase">
                           {order.user?.name.charAt(0) || "U"}
                         </div>
-                        <span className="font-bold text-zinc-900">
-                          {order.user?.name || "Unknown"}
-                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-zinc-900">
+                              {order.user?.name || "Unknown"}
+                            </span>
+                            {order.isGroupOrder && (
+                              <span
+                                className="flex items-center gap-1 bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black uppercase border border-blue-100 truncate"
+                                title={`Group: ${order.groupName || order.groupOrder?.name || "Group Order"}`}
+                              >
+                                <Users className="w-3 h-3 flex-shrink-0" />
+                                {order.groupName ||
+                                  order.groupOrder?.name ||
+                                  "GROUP"}
+                              </span>
+                            )}
+                          </div>
+                          {order.isGroupOrder && (
+                            <div
+                              className="text-[10px] text-zinc-400 font-medium mt-0.5 truncate"
+                              title={`Members: ${order.membersList || "Unknown"}`}
+                            >
+                              Members: {order.membersList || "Unknown"}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
-                    <td
-                      className="px-8 py-6 font-medium text-zinc-600 max-w-[200px] truncate"
-                      title={itemSummary}
-                    >
+
+                    <td className="px-8 py-6 font-medium text-zinc-600 max-w-[250px] leading-relaxed align-top">
                       {itemSummary}
                     </td>
-                    <td className="px-8 py-6 text-zinc-500 font-mono text-xs">
-                      {new Date(order.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+
+                    <td className="px-8 py-6 text-zinc-500 font-mono text-xs align-top whitespace-nowrap">
+                      <div className="font-bold text-zinc-700">
+                        {new Date(order.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                      <div className="text-[10px]">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </div>
                     </td>
-                    <td className="px-8 py-6 font-bold text-zinc-900">
+
+                    <td className="px-8 py-6 font-bold text-zinc-900 align-top">
                       {formatPrice(order.totalAmount, user.country)}
                     </td>
-                    <td className="px-8 py-6">
+
+                    <td className="px-8 py-6 align-top">
                       {isPending ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 text-xs font-bold border border-orange-100">
                           <Clock className="w-3 h-3" /> Waiting for Approval
@@ -217,38 +396,51 @@ export default function ManagerOrders() {
                         </span>
                       )}
                     </td>
-                    <td className="px-8 py-6 text-right">
+
+                    <td className="px-8 py-6 text-right align-top">
                       {isPending ? (
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() =>
                               handleApproveAndPay(
-                                order.id,
-                                order.user?.name,
-                                order.totalAmount,
+                                order.groupOrderId || order.id,
+                                order.isGroupOrder,
+                                order.sessionId,
+                                order.sessionUserId,
+                                order.sessionRestaurantId,
+                                order.itemIds,
                               )
                             }
                             disabled={isLoading}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white font-bold text-xs rounded-lg hover:bg-orange-600 transition-all shadow-md disabled:opacity-50"
-                            title="Approve & Pay"
+                            className="flex items-center justify-center w-8 h-8 rounded-full border border-green-200 text-green-600 hover:bg-green-50 hover:text-green-700 transition-all disabled:opacity-50"
+                            title="Approve Order"
                           >
                             {isLoading ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <Send className="w-3.5 h-3.5" />
+                              <CheckCircle2 className="w-5 h-5" />
                             )}
-                            {isLoading ? "Processing..." : "Pay Now"}
                           </button>
+
                           <button
-                            onClick={() => handleReject(order.id)}
+                            onClick={() =>
+                              handleReject(
+                                order.groupOrderId || order.id,
+                                order.isGroupOrder,
+                                order.sessionId,
+                                order.sessionUserId,
+                                order.sessionRestaurantId,
+                                order.itemIds,
+                              )
+                            }
                             disabled={isLoading}
-                            className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all border border-red-100 shadow-sm disabled:opacity-50"
+                            className="flex items-center justify-center w-8 h-8 rounded-full border border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 transition-all disabled:opacity-50"
                             title="Reject Order"
                           >
                             {isLoading ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <XCircle className="w-4 h-4" />
+                              <XCircle className="w-5 h-5" />
                             )}
                           </button>
                         </div>
@@ -271,6 +463,23 @@ export default function ManagerOrders() {
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+          height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e4e4e7;
+          border-radius: 10px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+          background: #d4d4d8;
+        }
+      `}</style>
     </div>
   );
 }

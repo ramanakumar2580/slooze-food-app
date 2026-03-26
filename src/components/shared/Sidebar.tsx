@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -17,15 +18,42 @@ import {
   ListOrdered,
 } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
+import { useCartStore } from "@/store/useCartStore";
 
 export const Sidebar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useUserStore();
 
+  // Brought in 'items' so the Sidebar can watch the cart size
+  const { items, clearCart } = useCartStore();
+
+  // ======================================================================
+  // GLOBAL CART GATEKEEPER: Runs on every page to prevent data bleeding
+  // ======================================================================
+  useEffect(() => {
+    if (!user) return;
+
+    const currentCartOwner = localStorage.getItem("cartOwnerId");
+
+    if (items.length > 0) {
+      if (!currentCartOwner) {
+        // Claim cart
+        localStorage.setItem("cartOwnerId", user.id);
+      } else if (currentCartOwner !== user.id) {
+        // Nuke stolen cart immediately so TopNav badge resets to 0!
+        clearCart();
+        localStorage.setItem("cartOwnerId", user.id);
+      }
+    } else if (items.length === 0) {
+      localStorage.removeItem("cartOwnerId");
+    }
+  }, [user, items.length, clearCart]);
+
   if (!user) return null;
 
   const handleLogout = () => {
+    clearCart();
     logout();
     router.push("/login");
   };
@@ -33,6 +61,8 @@ export const Sidebar = () => {
   const adminLinks = [
     { name: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Global Orders", href: "/admin/orders", icon: BarChart3 },
+    // ✅ ADDED NEW ADMIN GROUP MONITOR LINK HERE
+    { name: "Group Monitor", href: "/admin/groups", icon: Users },
     { name: "Vendor Mgmt", href: "/admin/restaurants", icon: Store },
     { name: "Billing", href: "/admin/payments", icon: CreditCard },
     { name: "Employees", href: "/admin/users", icon: Users },
@@ -41,6 +71,7 @@ export const Sidebar = () => {
   const managerLinks = [
     { name: "Overview", href: "/manager/dashboard", icon: LayoutDashboard },
     { name: "Team Orders", href: "/manager/orders", icon: ListOrdered },
+    { name: "Group Monitor", href: "/manager/groups", icon: Users },
     { name: "Restaurant Control", href: "/manager/restaurants", icon: Store },
     { name: "My Region", href: "/manager/region", icon: MapPin },
   ];
@@ -56,9 +87,13 @@ export const Sidebar = () => {
         ]
       : []),
     { name: "Order Food", href: "/member/restaurants", icon: UtensilsCrossed },
+    ...(user.role !== "ADMIN"
+      ? [{ name: "Squads", href: "/member/group-orders", icon: Users }]
+      : []),
     { name: "My Cart", href: "/member/cart", icon: ShoppingBag },
     { name: "My Orders", href: "/member/orders", icon: Clock },
   ];
+
   let managementLinks: typeof adminLinks = [];
   if (user.role === "ADMIN") managementLinks = adminLinks;
   if (user.role === "MANAGER") managementLinks = managerLinks;
@@ -74,7 +109,7 @@ export const Sidebar = () => {
         </span>
       </div>
 
-      <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-6 overflow-y-auto shadow-inner">
         {user.role !== "MEMBER" && (
           <div>
             <div className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3 px-2">
@@ -143,8 +178,9 @@ export const Sidebar = () => {
           </div>
         </div>
       </nav>
-      <div className="p-4 border-t border-zinc-800 bg-zinc-900">
-        <div className="flex items-center gap-3 mb-4 px-2 p-2 rounded-lg bg-zinc-800/50 border border-zinc-800">
+
+      <div className="p-4 border-t border-zinc-800 bg-zinc-900/50 backdrop-blur-sm">
+        <div className="flex items-center gap-3 mb-4 px-2 p-2 rounded-lg bg-zinc-800/50 border border-zinc-800 transition-colors">
           <div
             className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-inner ${
               user.role === "ADMIN"
@@ -160,8 +196,8 @@ export const Sidebar = () => {
             <p className="text-sm font-semibold text-white truncate">
               {user.name}
             </p>
-            <p className="text-[10px] text-zinc-400 truncate flex items-center gap-1">
-              <Globe2 className="w-3 h-3" />
+            <p className="text-[10px] text-zinc-400 truncate flex items-center gap-1 uppercase font-bold tracking-tighter">
+              <Globe2 className="w-3 h-3 text-zinc-500" />
               {user.country}
             </p>
           </div>
@@ -169,7 +205,7 @@ export const Sidebar = () => {
 
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-red-400 bg-red-950/30 hover:bg-red-900/50 border border-red-900/50 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-red-400 bg-red-950/20 hover:bg-red-900/40 border border-red-900/30 rounded-lg transition-all active:scale-95"
         >
           <LogOut className="w-3 h-3" />
           Sign Out

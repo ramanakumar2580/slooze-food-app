@@ -8,7 +8,6 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING") 
 }
 
-
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -20,7 +19,14 @@ model User {
   managerId String?                    
   createdAt DateTime @default(now())
 
-  orders    Order[]
+  // Core Order Relationships
+  orders       Order[]
+
+  // Group Social Relationships
+  hostedGroups  GroupOrder[]    @relation("GroupHost")
+  joinedGroups  GroupOrder[]    @relation("GroupMembers")
+  receivedInvites GroupInvite[] @relation("ReceivedInvites")
+  groupItems    GroupCartItem[]
 }
 
 // Acting as the "Vendor"
@@ -42,9 +48,10 @@ model MenuItem {
   category     String
   price        Float
   restaurantId String
-  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
   orderItems   OrderItem[]
+  groupItems   GroupCartItem[]
 }
 
 model Order {
@@ -59,10 +66,17 @@ model Order {
   approvalBy    String?                      
   isGlobal      Boolean  @default(false)    
   
+  // ==========================================
+  // SQUAD HISTORY TRACKING
+  // ==========================================
+  isGroupOrder  Boolean  @default(false)
+  groupOrderId  String?
+  
   createdAt     DateTime @default(now())
 
-  user          User        @relation(fields: [userId], references: [id])
-  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id])
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  groupOrder    GroupOrder? @relation(fields: [groupOrderId], references: [id], onDelete: SetNull)
   orderItems    OrderItem[]
 }
 
@@ -72,6 +86,78 @@ model OrderItem {
   menuItemId String
   quantity   Int
 
-  order      Order    @relation(fields: [orderId], references: [id])
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  // Cascade: Deleting an Order deletes its OrderItems
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// UPGRADED MODELS FOR SOCIAL GROUP ORDERS
+// ==========================================
+
+model GroupOrder {
+  id        String   @id @default(uuid())
+  name      String   // e.g., "The Avengers Lunch"
+  hostId    String
+  region    String   
+  status    String   @default("OPEN") // OPEN, SUBMITTED, APPROVED, CANCELLED
+  createdAt DateTime @default(now())
+
+  // Relations
+  host      User            @relation("GroupHost", fields: [hostId], references: [id], onDelete: Cascade)
+  members   User[]          @relation("GroupMembers") // Prisma handles Cascade automatically
+  items     GroupCartItem[]
+  invites   GroupInvite[]
+  orders    Order[]         // NEW: Links the final Restaurant Orders back to this Squad Session
+
+  // ==========================================
+  // NEW: Link to multiple cart sessions
+  // ==========================================
+  sessions  GroupCartSession[]
+}
+
+// ==========================================
+// NEW MODEL: The specific "Cart Session" 
+// This keeps different orders from the same group separate!
+// ==========================================
+model GroupCartSession {
+  id           String   @id @default(uuid())
+  groupOrderId String
+  status       String   @default("OPEN")
+  createdAt    DateTime @default(now())
+
+  groupOrder   GroupOrder      @relation(fields: [groupOrderId], references: [id], onDelete: Cascade)
+  items        GroupCartItem[]
+}
+
+model GroupInvite {
+  id          String   @id @default(uuid())
+  groupId     String
+  receiverId  String
+  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt   DateTime @default(now())
+  
+  // Cascade: Deleting a Group or User deletes their invites
+  group       GroupOrder @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  receiver    User       @relation("ReceivedInvites", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+model GroupCartItem {
+  id           String   @id @default(uuid())
+  groupOrderId String
+  userId       String
+  menuItemId   String
+  quantity     Int      @default(1)
+  addedAt      DateTime @default(now())
+
+  // ==========================================
+  // NEW: Link the item to the specific cart session
+  // ==========================================
+  sessionId    String?
+  session      GroupCartSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Cascade: Deleting a Group or User deletes their specific cart items
+  groupOrder   GroupOrder @relation(fields: [groupOrderId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 }
