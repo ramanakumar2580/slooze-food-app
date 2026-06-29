@@ -89,6 +89,3 @@ Use the "One-Click" login page to test the RBAC pipeline:
 - **Captain Marvel:** India Regional Manager
 - **Thanos:** India Employee
 
----
-
-_Developed by [Ramana Kumar Manupati] for the Slooze SDE Assessment._
