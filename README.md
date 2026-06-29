@@ -1,13 +1,10 @@
 # Slooze: Enterprise Food Delivery Management System
 
-![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-NeonDB-336791?logo=postgresql)
-![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-06B6D4?logo=tailwindcss)
-![Zustand](https://img.shields.io/badge/Zustand-State-764ABC?logo=react)
-
 Slooze is a B2B SaaS platform designed to manage corporate food ordering across global offices. It features a complex **Role-Based Access Control (RBAC)** system and **Geofenced Data Filtering** to serve three distinct user types: Admins, Managers, and Employees.
+
+## Live Demo
+
+Check out the live application here: **[https://slooze-food-app.vercel.app/](https://slooze-food-app.vercel.app/)**
 
 ## Core Features
 
